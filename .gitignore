@@ -2,3 +2,7 @@ node_modules/
 dist/
 install.log
 *.log
+
+# WSL rootfs build outputs (large; built via build/wsl/build-rootfs.sh)
+build/wsl/seqln-stage/
+build/wsl/*.tar

@@ -65,8 +65,22 @@ ipcMain.handle('get-config', () => getConfig());
 ipcMain.handle('set-socket', (_e, sock) => { const c = getConfig(); c.socket = String(sock || '').trim(); c.transport = null; saveConfig(c); return c; });
 ipcMain.handle('set-transport', (_e, t) => { const c = getConfig(); c.transport = t && t.port ? t : null; saveConfig(c); return c; });
 ipcMain.handle('set-node-config', (_e, patch) => { const c = getConfig(); c.mode = patch.mode || c.mode; c.node = Object.assign({}, c.node, patch.node || {}); saveConfig(c); return c; });
+// Augment the saved node config with bundled-artifact paths: on Windows the
+// WSL rootfs, on Linux/macOS a bundled lightningd if the app ships one.
+function nodeStartConfig() {
+  const node = Object.assign({}, getConfig().node);
+  const resDir = process.resourcesPath || __dirname;
+  if (nodeMgr.isWindows()) {
+    if (!node.rootfsPath) node.rootfsPath = path.join(resDir, 'wsl', 'Fulmen-seqln-rootfs.tar');
+  } else if (!node.lightningdPath) {
+    const bundled = path.join(resDir, 'seqln', 'lightningd');
+    if (fs.existsSync(bundled)) node.lightningdPath = bundled;
+  }
+  return node;
+}
+
 ipcMain.handle('node-status', () => Object.assign({ mode: getConfig().mode }, nodeMgr.status()));
-ipcMain.handle('node-start', async () => { await nodeMgr.start(getConfig().node); return nodeMgr.status(); });
+ipcMain.handle('node-start', async () => { await nodeMgr.start(nodeStartConfig()); return nodeMgr.status(); });
 ipcMain.handle('node-stop', async () => { await nodeMgr.stop(); return nodeMgr.status(); });
 ipcMain.handle('rpc', (_e, method, params) => callNode(method, params));
 
@@ -91,8 +105,8 @@ app.whenReady().then(async () => {
   // If the user configured a managed (bundled) node, bring it up. Don't block
   // the window — the renderer shows node status and retries.
   const c = getConfig();
-  if (c.mode === 'managed' && nodeMgr.supported() && c.node && c.node.lightningdPath) {
-    nodeMgr.start(c.node).catch(() => {}); // errors surface via node-status
+  if (c.mode === 'managed' && nodeMgr.supported()) {
+    nodeMgr.start(nodeStartConfig()).catch(() => {}); // errors surface via node-status
   }
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
