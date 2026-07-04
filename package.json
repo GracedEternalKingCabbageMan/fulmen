@@ -30,10 +30,17 @@
       "extraResources": [ { "from": "build/seqln-linux-x64", "to": "seqln" } ]
     },
     "win": {
-      "target": ["zip"],
+      "target": ["nsis", "zip"],
       "signAndEditExecutable": false,
       "artifactName": "Fulmen-${version}-win64.${ext}",
       "extraResources": [ { "from": "build/wsl", "to": "wsl", "filter": ["*.tar"] } ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "Fulmen-Setup-${version}.${ext}",
+      "deleteAppDataOnUninstall": false,
+      "shortcutName": "Fulmen"
     }
   },
   "devDependencies": {

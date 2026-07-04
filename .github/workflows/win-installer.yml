@@ -1,0 +1,40 @@
+name: windows-installer
+# Builds the one-file NSIS installer (Fulmen-Setup-<version>.exe) on a Windows
+# runner. Needed because electron-builder's NSIS target requires editing the
+# installer executable, which needs wine on Linux; on Windows it runs natively
+# and the exe also gets its proper icon + version metadata.
+#
+# The WSL rootfs (built on the dev machine by build/make-wsl-rootfs.sh, too
+# large for git) is fetched from the public Sequentia testnet download host.
+on:
+  workflow_dispatch:
+    inputs:
+      rootfs_url:
+        description: URL of the SeqLN WSL rootfs tar
+        required: false
+        default: https://sequentiatestnet.com/download/Fulmen-seqln-rootfs-0.2.0.tar
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fetch WSL rootfs
+        shell: bash
+        run: |
+          mkdir -p build/wsl
+          curl -fL --retry 5 -o build/wsl/Fulmen-seqln-rootfs.tar "${{ github.event.inputs.rootfs_url }}"
+          ls -la build/wsl/
+      - name: Install deps
+        run: npm install
+      - name: Build NSIS installer
+        # native Windows: let electron-builder stamp icon/version into the exe
+        run: npx electron-builder --win nsis -c.win.signAndEditExecutable=true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Fulmen-Setup
+          path: dist/Fulmen-Setup-*.exe
+          if-no-files-found: error
