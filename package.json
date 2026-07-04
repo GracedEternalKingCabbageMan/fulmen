@@ -19,7 +19,7 @@
     "directories": { "output": "dist", "buildResources": "build" },
     "files": ["src/**/*", "package.json"],
     "linux": { "target": ["AppImage"], "category": "Finance", "artifactName": "Fulmen-${version}-linux-x86_64.${ext}" },
-    "win": { "target": ["zip"], "artifactName": "Fulmen-${version}-win64.${ext}" }
+    "win": { "target": ["zip"], "signAndEditExecutable": false, "artifactName": "Fulmen-${version}-win64.${ext}" }
   },
   "devDependencies": {
     "electron": "^33.0.0",
