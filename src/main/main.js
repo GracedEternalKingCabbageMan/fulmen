@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { call } = require('./cln');
+const { restCall } = require('./cln-rest');
 const { NodeManager } = require('./node');
 
 const nodeMgr = new NodeManager();
@@ -38,26 +39,36 @@ function getConfig() {
   return config;
 }
 
-// The socket the RPC layer should use: a running managed node's socket wins,
-// otherwise the externally-configured one.
-function effectiveSocket() {
+// The transport the RPC layer should use, in priority order: a running managed
+// node (its own unix socket on Linux, or its clnrest endpoint in WSL) wins;
+// then an explicitly-configured clnrest (remote) transport; then the external
+// unix socket. Returns { type:'socket', socket } or { type:'rest', host,port,protocol,rune }.
+function currentTransport() {
+  const c = getConfig();
   const s = nodeMgr.status();
-  if (s.running && s.socketPath) return s.socketPath;
-  return getConfig().socket;
+  if (s.running && s.transport) return s.transport;         // managed WSL node -> clnrest
+  if (s.running && s.socketPath) return { type: 'socket', socket: s.socketPath }; // managed local node
+  if (c.transport && c.transport.type === 'rest' && c.transport.port) return c.transport; // remote clnrest
+  if (c.socket) return { type: 'socket', socket: c.socket };
+  return null;
+}
+
+async function callNode(method, params) {
+  const t = currentTransport();
+  if (!t) throw new Error('No SeqLN node configured (Settings → connect to a node, run a bundled one, or point at a remote clnrest).');
+  if (t.type === 'rest') return restCall(t, method, params || {});
+  return call(t.socket, method, params || {});
 }
 
 // --- IPC: the renderer drives SeqLN through here ----------------------------
 ipcMain.handle('get-config', () => getConfig());
-ipcMain.handle('set-socket', (_e, sock) => { const c = getConfig(); c.socket = String(sock || '').trim(); saveConfig(c); return c; });
+ipcMain.handle('set-socket', (_e, sock) => { const c = getConfig(); c.socket = String(sock || '').trim(); c.transport = null; saveConfig(c); return c; });
+ipcMain.handle('set-transport', (_e, t) => { const c = getConfig(); c.transport = t && t.port ? t : null; saveConfig(c); return c; });
 ipcMain.handle('set-node-config', (_e, patch) => { const c = getConfig(); c.mode = patch.mode || c.mode; c.node = Object.assign({}, c.node, patch.node || {}); saveConfig(c); return c; });
 ipcMain.handle('node-status', () => Object.assign({ mode: getConfig().mode }, nodeMgr.status()));
 ipcMain.handle('node-start', async () => { await nodeMgr.start(getConfig().node); return nodeMgr.status(); });
 ipcMain.handle('node-stop', async () => { await nodeMgr.stop(); return nodeMgr.status(); });
-ipcMain.handle('rpc', async (_e, method, params) => {
-  const sock = effectiveSocket();
-  if (!sock) throw new Error('No SeqLN node configured (Settings → connect to an existing node, or manage a bundled one).');
-  return call(sock, method, params || {});
-});
+ipcMain.handle('rpc', (_e, method, params) => callNode(method, params));
 
 // --- window ------------------------------------------------------------------
 function createWindow() {

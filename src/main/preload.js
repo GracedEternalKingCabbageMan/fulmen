@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('fulmen', {
   rpc: (method, params) => ipcRenderer.invoke('rpc', method, params),
   getConfig: () => ipcRenderer.invoke('get-config'),
   setSocket: (sock) => ipcRenderer.invoke('set-socket', sock),
+  setTransport: (t) => ipcRenderer.invoke('set-transport', t),
   setNodeConfig: (patch) => ipcRenderer.invoke('set-node-config', patch),
   nodeStatus: () => ipcRenderer.invoke('node-status'),
   nodeStart: () => ipcRenderer.invoke('node-start'),

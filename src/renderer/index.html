@@ -103,6 +103,20 @@
         <div id="set-msg" class="msg"></div>
       </div>
       <div class="panel">
+        <label class="lbl">Connect to a remote node — <code>clnrest</code> (also used on Windows, where SeqLN runs in WSL2)</label>
+        <div class="form-row">
+          <input id="rest-host" placeholder="host (127.0.0.1)">
+          <input id="rest-port" placeholder="clnrest port" inputmode="numeric" style="flex:0 0 120px">
+          <select id="rest-proto" style="flex:0 0 100px"><option value="https">https</option><option value="http">http</option></select>
+        </div>
+        <div class="form-row">
+          <input id="rest-rune" placeholder="rune (from `lightning-cli createrune`)">
+          <button id="rest-save" class="primary">Connect</button>
+        </div>
+        <div class="hint">Fulmen calls your node's clnrest API over TCP. On a self-signed https localhost cert it doesn't verify.</div>
+        <div id="rest-msg" class="msg"></div>
+      </div>
+      <div class="panel">
         <label class="lbl">Bundled node — let Fulmen run SeqLN for you <span class="muted">(Linux/macOS only)</span></label>
         <div class="form-row">
           <input id="node-path" placeholder="path to lightningd (bundled, or your SeqLN build)">

@@ -160,6 +160,21 @@ $('#set-save').addEventListener('click', async () => {
   } catch (e) { msg.className = 'msg bad'; msg.textContent = 'Saved, but: ' + String(e.message || e); }
 });
 
+// --- remote node (clnrest) ---------------------------------------------------
+$('#rest-save').addEventListener('click', async () => {
+  const msg = $('#rest-msg'); msg.className = 'msg';
+  try {
+    await window.fulmen.setTransport({
+      type: 'rest',
+      host: $('#rest-host').value.trim() || '127.0.0.1',
+      port: Number($('#rest-port').value.trim()),
+      protocol: $('#rest-proto').value,
+      rune: $('#rest-rune').value.trim(),
+    });
+    await refreshConn(); msg.className = 'msg ok'; msg.textContent = 'Connected.'; loadOverview();
+  } catch (e) { msg.className = 'msg bad'; msg.textContent = String(e.message || e); }
+});
+
 // --- managed node ------------------------------------------------------------
 async function refreshNodeStatus() {
   try {
@@ -192,6 +207,11 @@ $('#node-stopbtn').addEventListener('click', async () => {
 (async () => {
   const cfg = await window.fulmen.getConfig();
   $('#set-sock').value = cfg.socket || '';
+  const t = cfg.transport || {};
+  $('#rest-host').value = t.host || '';
+  $('#rest-port').value = t.port || '';
+  if (t.protocol) $('#rest-proto').value = t.protocol;
+  $('#rest-rune').value = t.rune || '';
   const n = cfg.node || {};
   $('#node-path').value = n.lightningdPath || '';
   $('#node-dir').value = n.lightningDir || '';
