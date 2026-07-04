@@ -160,10 +160,44 @@ $('#set-save').addEventListener('click', async () => {
   } catch (e) { msg.className = 'msg bad'; msg.textContent = 'Saved, but: ' + String(e.message || e); }
 });
 
+// --- managed node ------------------------------------------------------------
+async function refreshNodeStatus() {
+  try {
+    const s = await window.fulmen.nodeStatus();
+    const stat = $('#node-stat');
+    if (!s.supported) stat.textContent = 'not available on this OS (Core Lightning is POSIX-only)';
+    else if (s.running) stat.textContent = 'running (pid ' + s.pid + ')';
+    else stat.textContent = s.lastError ? ('stopped — ' + s.lastError) : 'stopped';
+  } catch {}
+}
+$('#node-startbtn').addEventListener('click', async () => {
+  const stat = $('#node-stat'); stat.textContent = 'starting…';
+  try {
+    await window.fulmen.setNodeConfig({ mode: 'managed', node: {
+      lightningdPath: $('#node-path').value.trim(),
+      lightningDir: $('#node-dir').value.trim() || undefined,
+      network: $('#node-net').value.trim() || undefined,
+    }});
+    await window.fulmen.nodeStart();
+    await refreshNodeStatus();
+    await refreshConn(); loadOverview();
+  } catch (e) { $('#node-stat').textContent = 'error: ' + String(e.message || e); }
+});
+$('#node-stopbtn').addEventListener('click', async () => {
+  try { await window.fulmen.nodeStop(); } catch {}
+  await refreshNodeStatus();
+});
+
 // --- boot --------------------------------------------------------------------
 (async () => {
   const cfg = await window.fulmen.getConfig();
   $('#set-sock').value = cfg.socket || '';
+  const n = cfg.node || {};
+  $('#node-path').value = n.lightningdPath || '';
+  $('#node-dir').value = n.lightningDir || '';
+  $('#node-net').value = n.network || '';
+  refreshNodeStatus();
+  setInterval(refreshNodeStatus, 5000);
   try { await refreshConn(); loadOverview(); }
-  catch { $('#ov-err').textContent = 'Not connected. Set your SeqLN lightning-rpc socket in Settings.'; }
+  catch { $('#ov-err').textContent = 'Not connected. In Settings, connect to your SeqLN node — or let Fulmen run a bundled one.'; }
 })();

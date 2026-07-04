@@ -94,13 +94,29 @@
     <section class="view" data-view="settings">
       <header class="vhead"><h1>Settings</h1></header>
       <div class="panel">
-        <label class="lbl">SeqLN <code>lightning-rpc</code> socket path</label>
+        <label class="lbl">Connect to an existing SeqLN node — <code>lightning-rpc</code> socket path</label>
         <div class="form-row">
           <input id="set-sock" placeholder="/home/you/.lightning/bitcoin/lightning-rpc">
           <button id="set-save" class="primary">Save &amp; connect</button>
         </div>
-        <div class="hint">Fulmen talks to a local SeqLN node over its unix socket. Point this at your node's <code>&lt;lightning-dir&gt;/&lt;network&gt;/lightning-rpc</code>.</div>
+        <div class="hint">Point this at your node's <code>&lt;lightning-dir&gt;/&lt;network&gt;/lightning-rpc</code>.</div>
         <div id="set-msg" class="msg"></div>
+      </div>
+      <div class="panel">
+        <label class="lbl">Bundled node — let Fulmen run SeqLN for you <span class="muted">(Linux/macOS only)</span></label>
+        <div class="form-row">
+          <input id="node-path" placeholder="path to lightningd (bundled, or your SeqLN build)">
+        </div>
+        <div class="form-row">
+          <input id="node-dir" placeholder="data dir (default ~/.fulmen/seqln)">
+          <input id="node-net" placeholder="network (bitcoin / testnet4 …)">
+        </div>
+        <div class="form-row">
+          <button id="node-startbtn" class="primary">Start node</button>
+          <button id="node-stopbtn" class="ghost">Stop</button>
+          <span id="node-stat" class="muted"></span>
+        </div>
+        <div class="hint">Fulmen spawns and supervises a local SeqLN node so you don't have to run one yourself. Core Lightning is POSIX-only, so a bundled node is Linux/macOS only; on Windows, use the socket field above to reach a node running elsewhere.</div>
       </div>
       <div class="about">
         Fulmen — a lightning-fast desktop wallet for <b>SeqLN</b>, the Sequentia Lightning Network.

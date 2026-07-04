@@ -4,6 +4,9 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { call } = require('./cln');
+const { NodeManager } = require('./node');
+
+const nodeMgr = new NodeManager();
 
 // --- tiny persistent config (socket path) -----------------------------------
 function configPath() { return path.join(app.getPath('userData'), 'config.json'); }
@@ -26,16 +29,33 @@ function saveConfig(cfg) {
 }
 let config = null;
 function getConfig() {
-  if (!config) { config = loadConfig(); if (!config.socket) config.socket = defaultSocket(); }
+  if (!config) {
+    config = loadConfig();
+    if (!config.socket) config.socket = defaultSocket();
+    if (!config.mode) config.mode = 'external';           // 'external' | 'managed'
+    if (!config.node) config.node = { lightningdPath: '', lightningDir: path.join(os.homedir(), '.fulmen', 'seqln'), network: 'bitcoin', extraArgs: [] };
+  }
   return config;
+}
+
+// The socket the RPC layer should use: a running managed node's socket wins,
+// otherwise the externally-configured one.
+function effectiveSocket() {
+  const s = nodeMgr.status();
+  if (s.running && s.socketPath) return s.socketPath;
+  return getConfig().socket;
 }
 
 // --- IPC: the renderer drives SeqLN through here ----------------------------
 ipcMain.handle('get-config', () => getConfig());
 ipcMain.handle('set-socket', (_e, sock) => { const c = getConfig(); c.socket = String(sock || '').trim(); saveConfig(c); return c; });
+ipcMain.handle('set-node-config', (_e, patch) => { const c = getConfig(); c.mode = patch.mode || c.mode; c.node = Object.assign({}, c.node, patch.node || {}); saveConfig(c); return c; });
+ipcMain.handle('node-status', () => Object.assign({ mode: getConfig().mode }, nodeMgr.status()));
+ipcMain.handle('node-start', async () => { await nodeMgr.start(getConfig().node); return nodeMgr.status(); });
+ipcMain.handle('node-stop', async () => { await nodeMgr.stop(); return nodeMgr.status(); });
 ipcMain.handle('rpc', async (_e, method, params) => {
-  const sock = getConfig().socket;
-  if (!sock) throw new Error('No SeqLN socket configured (Settings → lightning-rpc path).');
+  const sock = effectiveSocket();
+  if (!sock) throw new Error('No SeqLN node configured (Settings → connect to an existing node, or manage a bundled one).');
   return call(sock, method, params || {});
 });
 
@@ -55,8 +75,15 @@ function createWindow() {
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWindow();
+  // If the user configured a managed (bundled) node, bring it up. Don't block
+  // the window — the renderer shows node status and retries.
+  const c = getConfig();
+  if (c.mode === 'managed' && nodeMgr.supported() && c.node && c.node.lightningdPath) {
+    nodeMgr.start(c.node).catch(() => {}); // errors surface via node-status
+  }
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
+app.on('before-quit', () => { nodeMgr.stop(); });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
