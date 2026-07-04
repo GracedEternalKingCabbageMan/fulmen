@@ -1,14 +1,18 @@
 {
   "name": "fulmen",
   "productName": "Fulmen",
-  "version": "0.1.0",
-  "description": "Fulmen — a lightning-fast desktop wallet for SeqLN, the Sequentia Lightning Network. Asset channels, any-asset payments, and pure-LN asset↔BTC swaps.",
+  "version": "0.2.0",
+  "description": "Fulmen — a lightning-fast desktop wallet for SeqLN, the Sequentia Lightning Network. Ships with a bundled SeqLN node: point it at a Sequentia node and go. Asset channels, any-asset payments, and pure-LN asset↔BTC swaps.",
   "author": "Concatena Labs",
   "license": "MIT",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
     "rpc-smoke": "node src/main/cln.js",
+    "node-smoke": "node src/main/node.js",
+    "bundle:seqln": "bash build/make-seqln-bundle.sh",
+    "bundle:rootfs": "bash build/make-wsl-rootfs.sh",
+    "icon": "node build/make-icon.js",
     "dist:linux": "electron-builder --linux AppImage",
     "dist:win": "electron-builder --win zip",
     "dist": "electron-builder --linux AppImage --win zip"
@@ -18,7 +22,13 @@
     "productName": "Fulmen",
     "directories": { "output": "dist", "buildResources": "build" },
     "files": ["src/**/*", "package.json"],
-    "linux": { "target": ["AppImage"], "category": "Finance", "artifactName": "Fulmen-${version}-linux-x86_64.${ext}" },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Finance",
+      "icon": "build/icon.png",
+      "artifactName": "Fulmen-${version}-linux-x86_64.${ext}",
+      "extraResources": [ { "from": "build/seqln-linux-x64", "to": "seqln" } ]
+    },
     "win": {
       "target": ["zip"],
       "signAndEditExecutable": false,

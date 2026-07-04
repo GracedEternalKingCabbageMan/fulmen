@@ -1,36 +1,20 @@
-# Fulmen on Windows — SeqLN via WSL2
+# SeqLN WSL2 rootfs (Windows bundled node)
 
-Core Lightning (SeqLN) is POSIX-only and does not run natively on Windows. On
-Windows, Fulmen runs SeqLN inside **WSL2** (a Microsoft-shipped Linux VM built
-into Windows 10 2004+/11) and talks to it over **clnrest** (localhost TCP, which
-WSL2 forwards). The user does nothing manual — Fulmen manages the WSL distro.
+Core Lightning is POSIX-only, so on Windows Fulmen runs SeqLN inside WSL2.
+`Fulmen-seqln-rootfs.tar` is the distro image Fulmen imports on first run
+(`wsl --import fulmen-seqln ...`), then it spawns `lightningd` + `clnrest`
+inside it and talks clnrest over localhost TCP.
 
-## Flow (implemented in `src/main/node.js` `_startWSL`)
-1. Ensure WSL2 (`wsl --status`; if missing, prompt `wsl --install`).
-2. First run only: `wsl --import fulmen-seqln <installDir> <rootfs.tar> --version 2`
-   registers a dedicated, isolated distro from the bundled rootfs.
-3. Spawn `wsl -d fulmen-seqln -- /opt/seqln/lightningd --lightning-dir=… --network=…
-   --plugin=/opt/seqln/plugins/clnrest --clnrest-port=9737 --clnrest-protocol=http
-   --clnrest-host=127.0.0.1`.
-4. Mint a rune (`… lightning-cli createrune`) and expose a clnrest transport
-   `{host:127.0.0.1, port:9737, protocol:http, rune}` to the GUI.
+Build it (no docker needed):
 
-## Building the bundled rootfs
-Needs docker + a SeqLN build; run on Linux (or WSL):
+    bash build/make-seqln-bundle.sh    # stage the SeqLN runtime
+    bash build/make-wsl-rootfs.sh      # ubuntu-base 24.04 + /opt/seqln overlay
 
-    SEQLN=~/seqln ./build-rootfs.sh      # -> build/wsl/Fulmen-seqln-rootfs.tar
+Layout inside the image (contract with `src/main/node.js` `_startWSL`):
 
-`electron-builder` bundles that tar into the Windows installer (see the `win`
-`extraResources` in `package.json`); Fulmen finds it at
-`<resources>/wsl/Fulmen-seqln-rootfs.tar`. **Build the rootfs before packaging
-the Windows build.**
+    /opt/seqln/bin/      lightningd + lightning_* subdaemons + lightning-cli,
+                         lightning-hsmtool, elements-cli, bitcoin-cli
+    /opt/seqln/plugins/  builtin C plugins + clnrest (Rust, static)
+    /opt/seqln/lib/      libsqlite3.so.0, libsodium.so.23
 
-## Backend
-SeqLN needs a chain backend, but `bcli` points at a **remote** Sequentia testnet
-RPC (passed via the node's `extraArgs`), so the rootfs ships only `lightningd`
-(+ subdaemons/plugins), not a full `elementsd`.
-
-## Status
-Code-complete; **not yet built or validated on Windows** from this environment
-(no docker access + no Windows/WSL here). To finish: build the rootfs on a
-machine with docker, then package + smoke-test the Windows build under WSL2.
+The Windows zip carries the tar via electron-builder `win.extraResources`.

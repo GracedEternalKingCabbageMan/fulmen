@@ -3,6 +3,9 @@ dist/
 install.log
 *.log
 
-# WSL rootfs build outputs (large; built via build/wsl/build-rootfs.sh)
-build/wsl/seqln-stage/
+# staged SeqLN runtime + WSL rootfs build outputs (large; rebuilt by
+# build/make-seqln-bundle.sh and build/make-wsl-rootfs.sh)
+build/seqln-linux-x64/
+build/cache/
+build/wsl/rootfs-stage/
 build/wsl/*.tar

@@ -15,6 +15,7 @@
         <div class="tag">SeqLN</div>
       </div>
     </div>
+    <div id="netswitch" class="netswitch"></div>
     <nav id="nav">
       <button class="nav active" data-view="overview">Overview</button>
       <button class="nav" data-view="channels">Channels</button>
@@ -32,6 +33,7 @@
     <!-- OVERVIEW -->
     <section class="view active" data-view="overview">
       <header class="vhead"><h1>Overview</h1><button class="ghost" id="ov-refresh">Refresh</button></header>
+      <div id="ov-sync" class="syncline" hidden><div class="syncbar"><div id="ov-syncfill" class="syncfill"></div></div><span id="ov-synctext"></span></div>
       <div id="ov-node" class="node-card"></div>
       <h2 class="sub">Balances by asset</h2>
       <div id="ov-balances" class="bal-grid"></div>
@@ -46,7 +48,7 @@
         <div class="form-row">
           <input id="ch-peer" placeholder="peer id (or id@host:port to connect first)">
           <input id="ch-amount" placeholder="amount (asset atoms)" inputmode="numeric">
-          <input id="ch-asset" placeholder="asset id (blank = base/policy)">
+          <input id="ch-asset" placeholder="asset id (blank = fee/policy asset)">
           <button id="ch-open" class="primary">Open</button>
         </div>
         <div id="ch-open-msg" class="msg"></div>
@@ -65,9 +67,9 @@
       <header class="vhead"><h1>Pay</h1></header>
       <div class="panel">
         <label class="lbl">BOLT11 invoice</label>
-        <textarea id="pay-inv" rows="3" placeholder="lnbc… / lntb… / lnert…"></textarea>
+        <textarea id="pay-inv" rows="3" placeholder="lntsqt… / lntb…"></textarea>
         <div class="form-row">
-          <select id="pay-asset"><option value="">Base asset (policy)</option></select>
+          <select id="pay-asset"><option value="">Fee/policy asset</option></select>
           <button id="pay-go" class="primary">Pay</button>
         </div>
         <div class="hint">Choose the asset to route in. Fulmen sends <code>pay asset=&lt;id&gt;</code> so the payment travels over same-asset channels only.</div>
@@ -93,17 +95,22 @@
     <!-- SETTINGS -->
     <section class="view" data-view="settings">
       <header class="vhead"><h1>Settings</h1></header>
+
+      <h2 class="sub">Nodes Fulmen runs for you</h2>
+      <div id="managed-nodes"></div>
+
+      <h2 class="sub">Advanced: connect to a node you run yourself</h2>
       <div class="panel">
-        <label class="lbl">Connect to an existing SeqLN node — <code>lightning-rpc</code> socket path</label>
+        <label class="lbl">Existing SeqLN node, <code>lightning-rpc</code> socket path</label>
         <div class="form-row">
-          <input id="set-sock" placeholder="/home/you/.lightning/bitcoin/lightning-rpc">
+          <input id="set-sock" placeholder="/home/you/.lightning/sequentia-testnet/lightning-rpc">
           <button id="set-save" class="primary">Save &amp; connect</button>
         </div>
         <div class="hint">Point this at your node's <code>&lt;lightning-dir&gt;/&lt;network&gt;/lightning-rpc</code>.</div>
         <div id="set-msg" class="msg"></div>
       </div>
       <div class="panel">
-        <label class="lbl">Connect to a remote node — <code>clnrest</code> (also used on Windows, where SeqLN runs in WSL2)</label>
+        <label class="lbl">Remote node over <code>clnrest</code></label>
         <div class="form-row">
           <input id="rest-host" placeholder="host (127.0.0.1)">
           <input id="rest-port" placeholder="clnrest port" inputmode="numeric" style="flex:0 0 120px">
@@ -116,28 +123,101 @@
         <div class="hint">Fulmen calls your node's clnrest API over TCP. On a self-signed https localhost cert it doesn't verify.</div>
         <div id="rest-msg" class="msg"></div>
       </div>
-      <div class="panel">
-        <label class="lbl">Bundled node — let Fulmen run SeqLN for you <span class="muted">(Linux/macOS only)</span></label>
-        <div class="form-row">
-          <input id="node-path" placeholder="path to lightningd (bundled, or your SeqLN build)">
-        </div>
-        <div class="form-row">
-          <input id="node-dir" placeholder="data dir (default ~/.fulmen/seqln)">
-          <input id="node-net" placeholder="network (bitcoin / testnet4 …)">
-        </div>
-        <div class="form-row">
-          <button id="node-startbtn" class="primary">Start node</button>
-          <button id="node-stopbtn" class="ghost">Stop</button>
-          <span id="node-stat" class="muted"></span>
-        </div>
-        <div class="hint">Fulmen spawns and supervises a local SeqLN node so you don't have to run one yourself. Core Lightning is POSIX-only, so a bundled node is Linux/macOS only; on Windows, use the socket field above to reach a node running elsewhere.</div>
-      </div>
       <div class="about">
-        Fulmen — a lightning-fast desktop wallet for <b>SeqLN</b>, the Sequentia Lightning Network.
-        Asset channels, any-asset payments, and pure-LN asset↔BTC swaps. Built by Concatena Labs.
+        Fulmen, a lightning-fast desktop wallet for <b>SeqLN</b>, the Sequentia Lightning Network.
+        Asset channels, any-asset payments, and pure-LN asset&harr;BTC swaps. Built by Concatena Labs.
+        <div id="about-version" class="muted"></div>
       </div>
     </section>
   </main>
+
+  <!-- LOGS MODAL -->
+  <div id="logs-modal" class="modal" hidden>
+    <div class="modal-box wide">
+      <div class="modal-head"><b id="logs-title">Node log</b><button class="ghost" id="logs-close">Close</button></div>
+      <pre id="logs-pre" class="logs"></pre>
+    </div>
+  </div>
+
+  <!-- BACKUP MODAL -->
+  <div id="backup-modal" class="modal" hidden>
+    <div class="modal-box">
+      <div class="modal-head"><b>Back up your wallet</b><button class="ghost" id="backup-close">Close</button></div>
+      <div class="modal-body">
+        <p>Your node's keys live in a single file, <code>hsm_secret</code>. Anyone with this file can spend your funds; without it, funds on this node are unrecoverable. Copy it somewhere safe (a USB stick you keep offline is fine), together with <code>emergency.recover</code> if present.</p>
+        <div class="kvline"><span class="k">Wallet folder</span><span id="backup-dir" class="v mono"></span></div>
+        <div class="form-row">
+          <button id="backup-reveal" class="primary">Show in folder</button>
+        </div>
+        <div id="backup-note" class="hint"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ONBOARDING -->
+  <div id="onboard" class="onboard" hidden>
+    <div class="ob-box">
+      <div class="ob-brand"><span class="bolt">⚡</span> <b>Fulmen</b> <span class="tag">SeqLN</span></div>
+
+      <div class="ob-step" data-step="1">
+        <h2>Welcome</h2>
+        <p>Fulmen is a desktop wallet for SeqLN, the Sequentia Lightning Network. It ships with a full SeqLN node inside: you don't install or configure anything. The node needs one thing from you, a Sequentia node it can read the chain through (yours, or any elementsd RPC you have access to).</p>
+        <div class="ob-choices">
+          <button class="ob-choice primary" id="ob-run">Run a node for me <span>recommended</span></button>
+          <button class="ob-choice ghost" id="ob-own">I already run SeqLN <span>connect over socket or clnrest</span></button>
+        </div>
+      </div>
+
+      <div class="ob-step" data-step="2" hidden>
+        <h2>Your Sequentia node</h2>
+        <p>SeqLN reads the Sequentia chain through a node's RPC. Local or remote both work.</p>
+        <div class="form-row">
+          <input id="ob-seq-host" placeholder="host (127.0.0.1)">
+          <input id="ob-seq-port" placeholder="port (18332)" inputmode="numeric" style="flex:0 0 130px">
+        </div>
+        <div class="form-row">
+          <input id="ob-seq-user" placeholder="rpcuser">
+          <input id="ob-seq-pass" type="password" placeholder="rpcpassword">
+          <button id="ob-seq-test" class="ghost">Test connection</button>
+        </div>
+        <div id="ob-seq-msg" class="msg"></div>
+        <label class="ob-opt"><input type="checkbox" id="ob-btc-enable"> Also run Lightning on Bitcoin testnet4 (needs a Bitcoin node)</label>
+        <div id="ob-btc-form" hidden>
+          <div class="form-row">
+            <input id="ob-btc-host" placeholder="host (127.0.0.1)">
+            <input id="ob-btc-port" placeholder="port (48332)" inputmode="numeric" style="flex:0 0 130px">
+          </div>
+          <div class="form-row">
+            <input id="ob-btc-user" placeholder="rpcuser">
+            <input id="ob-btc-pass" type="password" placeholder="rpcpassword">
+            <button id="ob-btc-test" class="ghost">Test connection</button>
+          </div>
+          <div id="ob-btc-msg" class="msg"></div>
+        </div>
+        <div class="ob-nav"><button class="ghost" id="ob-back1">Back</button><button class="primary" id="ob-start">Start my node</button></div>
+      </div>
+
+      <div class="ob-step" data-step="3" hidden>
+        <h2>Starting SeqLN</h2>
+        <div id="ob-progress" class="ob-progress">
+          <div class="kvline"><span class="k">Status</span><span id="ob-stat" class="v">starting…</span></div>
+          <div class="syncbar"><div id="ob-syncfill" class="syncfill"></div></div>
+          <div id="ob-synctext" class="hint"></div>
+          <pre id="ob-log" class="logs small"></pre>
+        </div>
+        <div id="ob-err" class="err"></div>
+        <div class="ob-nav"><button class="ghost" id="ob-back2" hidden>Back</button><button class="ghost" id="ob-retry" hidden>Retry</button></div>
+      </div>
+
+      <div class="ob-step" data-step="4" hidden>
+        <h2>Back up your wallet</h2>
+        <p>Your node just created its keys. They live in one file, <code>hsm_secret</code>. Anyone with the file can spend your funds; without it, nothing is recoverable. Copy the wallet folder somewhere safe now.</p>
+        <div class="kvline"><span class="k">Wallet folder</span><span id="ob-hsm-dir" class="v mono"></span></div>
+        <div class="form-row"><button id="ob-reveal" class="ghost">Show in folder</button></div>
+        <div class="ob-nav"><button class="primary" id="ob-done">I saved my backup</button></div>
+      </div>
+    </div>
+  </div>
 
   <script src="renderer.js"></script>
 </body>
