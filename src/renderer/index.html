@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';">
+  <title>Fulmen</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="rail">
+    <div class="brand">
+      <span class="bolt">⚡</span>
+      <div>
+        <div class="name">Fulmen</div>
+        <div class="tag">SeqLN</div>
+      </div>
+    </div>
+    <nav id="nav">
+      <button class="nav active" data-view="overview">Overview</button>
+      <button class="nav" data-view="channels">Channels</button>
+      <button class="nav" data-view="pay">Pay</button>
+      <button class="nav" data-view="receive">Receive</button>
+      <button class="nav" data-view="settings">Settings</button>
+    </nav>
+    <div class="rail-foot">
+      <span id="conn-dot" class="dot off"></span>
+      <span id="conn-label" class="conn-label">not connected</span>
+    </div>
+  </aside>
+
+  <main id="main">
+    <!-- OVERVIEW -->
+    <section class="view active" data-view="overview">
+      <header class="vhead"><h1>Overview</h1><button class="ghost" id="ov-refresh">Refresh</button></header>
+      <div id="ov-node" class="node-card"></div>
+      <h2 class="sub">Balances by asset</h2>
+      <div id="ov-balances" class="bal-grid"></div>
+      <div id="ov-err" class="err"></div>
+    </section>
+
+    <!-- CHANNELS -->
+    <section class="view" data-view="channels">
+      <header class="vhead"><h1>Channels</h1><button class="ghost" id="ch-refresh">Refresh</button></header>
+      <div class="panel">
+        <h2 class="sub">Open a channel</h2>
+        <div class="form-row">
+          <input id="ch-peer" placeholder="peer id (or id@host:port to connect first)">
+          <input id="ch-amount" placeholder="amount (asset atoms)" inputmode="numeric">
+          <input id="ch-asset" placeholder="asset id (blank = base/policy)">
+          <button id="ch-open" class="primary">Open</button>
+        </div>
+        <div id="ch-open-msg" class="msg"></div>
+      </div>
+      <div class="table-wrap">
+        <table id="ch-table">
+          <thead><tr><th>Peer</th><th>Short id</th><th>Asset</th><th>State</th><th class="num">Ours</th><th class="num">Theirs</th></tr></thead>
+          <tbody id="ch-body"></tbody>
+        </table>
+      </div>
+      <div id="ch-err" class="err"></div>
+    </section>
+
+    <!-- PAY -->
+    <section class="view" data-view="pay">
+      <header class="vhead"><h1>Pay</h1></header>
+      <div class="panel">
+        <label class="lbl">BOLT11 invoice</label>
+        <textarea id="pay-inv" rows="3" placeholder="lnbc… / lntb… / lnert…"></textarea>
+        <div class="form-row">
+          <select id="pay-asset"><option value="">Base asset (policy)</option></select>
+          <button id="pay-go" class="primary">Pay</button>
+        </div>
+        <div class="hint">Choose the asset to route in. Fulmen sends <code>pay asset=&lt;id&gt;</code> so the payment travels over same-asset channels only.</div>
+        <div id="pay-msg" class="msg"></div>
+      </div>
+    </section>
+
+    <!-- RECEIVE -->
+    <section class="view" data-view="receive">
+      <header class="vhead"><h1>Receive</h1></header>
+      <div class="panel">
+        <div class="form-row">
+          <input id="rc-amount" placeholder="amount (atoms/msat*1000)" inputmode="numeric">
+          <input id="rc-desc" placeholder="description">
+          <button id="rc-go" class="primary">Create invoice</button>
+        </div>
+        <div class="hint">An invoice is asset-blind; the payer chooses which asset to pay it in.</div>
+        <div id="rc-out" class="invoice-out"></div>
+        <div id="rc-msg" class="msg"></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" data-view="settings">
+      <header class="vhead"><h1>Settings</h1></header>
+      <div class="panel">
+        <label class="lbl">SeqLN <code>lightning-rpc</code> socket path</label>
+        <div class="form-row">
+          <input id="set-sock" placeholder="/home/you/.lightning/bitcoin/lightning-rpc">
+          <button id="set-save" class="primary">Save &amp; connect</button>
+        </div>
+        <div class="hint">Fulmen talks to a local SeqLN node over its unix socket. Point this at your node's <code>&lt;lightning-dir&gt;/&lt;network&gt;/lightning-rpc</code>.</div>
+        <div id="set-msg" class="msg"></div>
+      </div>
+      <div class="about">
+        Fulmen — a lightning-fast desktop wallet for <b>SeqLN</b>, the Sequentia Lightning Network.
+        Asset channels, any-asset payments, and pure-LN asset↔BTC swaps. Built by Concatena Labs.
+      </div>
+    </section>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

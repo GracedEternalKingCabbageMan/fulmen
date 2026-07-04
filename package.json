@@ -1,0 +1,28 @@
+{
+  "name": "fulmen",
+  "productName": "Fulmen",
+  "version": "0.1.0",
+  "description": "Fulmen — a lightning-fast desktop wallet for SeqLN, the Sequentia Lightning Network. Asset channels, any-asset payments, and pure-LN asset↔BTC swaps.",
+  "author": "Concatena Labs",
+  "license": "MIT",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "rpc-smoke": "node src/main/cln.js",
+    "dist:linux": "electron-builder --linux AppImage",
+    "dist:win": "electron-builder --win zip",
+    "dist": "electron-builder --linux AppImage --win zip"
+  },
+  "build": {
+    "appId": "io.sequentia.fulmen",
+    "productName": "Fulmen",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["src/**/*", "package.json"],
+    "linux": { "target": ["AppImage"], "category": "Finance", "artifactName": "Fulmen-${version}-linux-x86_64.${ext}" },
+    "win": { "target": ["zip"], "artifactName": "Fulmen-${version}-win64.${ext}" }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  }
+}
