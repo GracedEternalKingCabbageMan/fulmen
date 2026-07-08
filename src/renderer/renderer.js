@@ -4,8 +4,15 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const rpc = (m, p) => window.fulmen.rpc(m, p);
 
 // Friendly labels for known Sequentia testnet assets; unknown ids fall back to short hex.
+// Current public-testnet ids (re-genesis 2026-07-05), from the Sequentia Asset Registry
+// seed; each verified live via https://sequentiatestnet.com/api/asset/<id>.
 const KNOWN_ASSETS = {
-  '83053bb23caeb4e76986dbd40887f850ab26dc202b180dcb2521c74a61b7499d': 'GOLD',
+  'c8eccacf0953e1931cd31e434d8319101cc36e6c38b0e2104d8687552fae3e40': 'tSEQ',
+  '3a0f9192219db59f8d7f87d93ac6311095dfe1255d149727b87baaa7d2cc71a1': 'GOLD',
+  '2a515539da5e6a60caa7766ecd65bac0c10d15717ddd2088844ba58f4d04b9de': 'USDX',
+  'e39685e718516156679088d9400d11a1eb82bf7cc27c5b9f5a614b8c91246d13': 'EURX',
+  '57dfa6b0eff594cc3ef1de5555e0526d1eb5590289e014e7663b292edcd63f48': 'SILVR',
+  '4dfe69c334a9cdf4005ddf3889bba1bc397703fa8da669254877f3209caf7c8f': 'OILX',
 };
 let CFG = null;      // config snapshot from main
 let STATUS = null;   // last node-status snapshot
