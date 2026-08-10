@@ -38,7 +38,10 @@ npm run dist:win          # Windows zip
 npm run dist              # both
 ```
 
-There is no test suite. The two `*-smoke` scripts are the only automated checks.
+There is no test suite. The `*-smoke` entries are scriptable headless probes rather than tests, and
+each needs arguments (a socket path; a host, port and rune; or the full NodeManager argument list) —
+`README.md`'s Contributing section has the exact invocations. The Linux bundled-node path has been
+exercised end to end through them; the GUI has had only limited interactive testing.
 
 ## Releases
 
@@ -65,7 +68,9 @@ auto-publishes a release.** Publishing is a deliberate manual step.
   process. If you are ever told to leave one specific PR open, that applies to that PR only and
   never becomes the default.
 - PRs go against `master`, which is the remote default.
-- Bump `version` in `package.json` for a release; the artifact names are templated from it, and the
-  default rootfs URL in the workflow is version-stamped, so check both.
-- `README.md` documents the pre-0.2.0 attach-to-an-existing-node workflow and has not caught up
-  with node bundling. Verify against `package.json` and `src/main/node.js`.
+- Bump `version` in `package.json` for a release; the artifact names are templated from it, the
+  workflow's default rootfs URL is version-stamped, and `README.md` names the artifacts explicitly,
+  so all three move together.
+- Binaries are **unsigned**, and the Windows path has not been exercised on real Windows hardware.
+  `README.md`'s Status section says so plainly. Keep it that way rather than quietly upgrading the
+  claim.
