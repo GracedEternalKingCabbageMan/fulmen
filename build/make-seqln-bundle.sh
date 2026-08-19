@@ -16,7 +16,7 @@
 set -euo pipefail
 
 SEQLN=${SEQLN:-$HOME/seqln}
-ELEMENTS_CLI=${ELEMENTS_CLI:-$HOME/SequentiaByClaude/build-linux/src/elements-cli}
+ELEMENTS_CLI=${ELEMENTS_CLI:-$HOME/Sequentia/build-linux/src/elements-cli}
 BITCOIN_CLI=${BITCOIN_CLI:-/usr/local/bin/bitcoin-cli}
 OUT=${OUT:-"$(cd "$(dirname "$0")" && pwd)/seqln-linux-x64"}
 LIBDIR=/usr/lib/x86_64-linux-gnu
