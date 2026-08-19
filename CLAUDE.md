@@ -20,6 +20,9 @@ Node and consensus conventions live in the
 - `src/main/preload.js` — the only surface the renderer sees (`window.fulmen.rpc`). Keep it that way.
 - `src/renderer/` — the UI.
 - `build/` — icon generation and the two bundling scripts.
+- `docs/bundled-seqln-plan.md` — the work plan 0.2.0's bundling shipped from. Its status
+  header records the deltas from the plan and, importantly, what was *not* verified: GUI
+  click-through, and the whole Windows/WSL2 path on real Windows hardware (§6.8, still owed).
 
 ## Commands
 
