@@ -12,11 +12,13 @@
 #
 # elements-cli / bitcoin-cli are REQUIRED: SeqLN's bcli plugin does not speak
 # HTTP itself — it shells out to the chain CLI, which does the RPC (the actual
-# elementsd/bitcoind can be local or remote).
+# sequentiad/bitcoind can be local or remote). bcli invokes the Sequentia CLI
+# under the legacy name elements-cli, so the node's sequentia-cli is staged
+# under that name.
 set -euo pipefail
 
 SEQLN=${SEQLN:-$HOME/seqln}
-ELEMENTS_CLI=${ELEMENTS_CLI:-$HOME/Sequentia/build-linux/src/elements-cli}
+ELEMENTS_CLI=${ELEMENTS_CLI:-$HOME/Sequentia/src/sequentia-cli}
 BITCOIN_CLI=${BITCOIN_CLI:-/usr/local/bin/bitcoin-cli}
 OUT=${OUT:-"$(cd "$(dirname "$0")" && pwd)/seqln-linux-x64"}
 LIBDIR=/usr/lib/x86_64-linux-gnu
