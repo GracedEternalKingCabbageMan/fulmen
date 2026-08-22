@@ -17,7 +17,8 @@ Node and consensus conventions live in the
 - `src/main/cln.js` — a dependency-free CLN JSON-RPC client over the unix socket.
 - `src/main/cln-rest.js` — the clnrest (TCP) transport, used for remote nodes and for Windows/WSL2.
 - `src/main/node.js` — the bundled-node manager.
-- `src/main/preload.js` — the only surface the renderer sees (`window.fulmen.rpc`). Keep it that way.
+- `src/main/preload.js` — the only surface the renderer sees (`window.fulmen`: `rpc` plus the config
+  and node-management calls listed there). Keep it that way.
 - `src/renderer/` — the UI.
 - `build/` — icon generation and the two bundling scripts.
 - `docs/bundled-seqln-plan.md` — the work plan 0.2.0's bundling shipped from. Its status

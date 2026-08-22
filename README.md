@@ -30,10 +30,10 @@ lives in the node repo:
 
 | Repo | One-liner |
 |---|---|
-| [`Sequentia`](https://github.com/GracedEternalKingCabbageMan/Sequentia) | The Sequentia node (`elementsd` fork of Elements 23.3.3): consensus, anchoring, proof of stake, open fee market, plus the canonical protocol documentation in `doc/sequentia/`. |
+| [`Sequentia`](https://github.com/GracedEternalKingCabbageMan/Sequentia) | The Sequentia node (`sequentiad`, a fork of Elements 23.3.3): consensus, anchoring, proof of stake, open fee market, plus the canonical protocol documentation in `doc/sequentia/`. |
 | [`seqln`](https://github.com/GracedEternalKingCabbageMan/seqln) | SeqLN: a Core Lightning fork that runs on Sequentia and Bitcoin from the same binary: asset channels, any-asset payments, pure-Lightning swaps. |
 | [`fulmen`](https://github.com/GracedEternalKingCabbageMan/fulmen) | Fulmen: desktop (Electron) wallet for SeqLN with a bundled Lightning node. |
-| [`seqdex`](https://github.com/GracedEternalKingCabbageMan/seqdex) | SeqDEX: non-custodial atomic-swap DEX with a P2P order book (seqob), same-chain swaps, and cross-chain BTC↔asset swaps made safe by Bitcoin anchoring. |
+| [`seqdex`](https://github.com/GracedEternalKingCabbageMan/seqdex) | SeqDEX: non-custodial atomic-swap DEX with an on-chain covenant order book (SeqOB) served over a relay, same-chain swaps, and cross-chain BTC↔asset swaps made safe by Bitcoin anchoring. |
 
 Live testnet services (explorer, web wallet, faucet, downloads) are at
 https://sequentiatestnet.com/.
@@ -71,7 +71,7 @@ Downloads: https://sequentiatestnet.com/download/
 Fulmen bundles the *Lightning* node, not the chain node. SeqLN reads the chain
 through a node RPC, so you need:
 
-- **Required**: a Sequentia node (`elementsd`) RPC endpoint, local or remote
+- **Required**: a Sequentia node (`sequentiad`) RPC endpoint, local or remote
   (default `127.0.0.1:18332`). Node downloads and setup:
   [Sequentia](https://github.com/GracedEternalKingCabbageMan/Sequentia) or the
   prebuilt binaries on the download page.
@@ -109,7 +109,7 @@ bundled node; you can still connect Fulmen to a remote SeqLN over clnrest
 
 1. **Welcome**: choose "Run a node for me" (recommended) or "I already run
    SeqLN" (jumps to Settings to connect over unix socket or clnrest).
-2. **Your Sequentia node**: enter the elementsd RPC host, port, and credentials,
+2. **Your Sequentia node**: enter the `sequentiad` RPC host, port, and credentials,
    and use "Test connection" to verify. Optionally tick "Also run Lightning on
    Bitcoin testnet4" and fill in the bitcoind RPC.
 3. **Starting SeqLN**: Fulmen starts the node(s), streams the log, and shows a
@@ -164,9 +164,11 @@ Three transports, selected automatically:
   authenticated transport security.
 
 SeqLN itself needs a chain backend, and its `bcli` plugin does not speak HTTP:
-it shells out to `elements-cli` (Sequentia networks) or `bitcoin-cli` (Bitcoin
-networks). Both CLIs ship inside the bundle, so only the chain node's RPC needs
-to be reachable; the chain node itself can be local or remote.
+it shells out to a chain CLI, invoked under the legacy name `elements-cli` on
+Sequentia networks (the bundle stages the node's `sequentia-cli` under that
+name) or `bitcoin-cli` on Bitcoin networks. Both CLIs ship inside the bundle,
+so only the chain node's RPC needs to be reachable; the chain node itself can
+be local or remote.
 
 There is deliberately no third-party dependency in the app: `package.json` has
 only `electron` and `electron-builder` as dev dependencies.
@@ -204,12 +206,14 @@ up `build/seqln-linux-x64/` automatically.
 ### Stage the SeqLN runtime bundle (Linux x64)
 
 Requires a built [seqln](https://github.com/GracedEternalKingCabbageMan/seqln)
-tree plus `elements-cli` and `bitcoin-cli` binaries. Paths are overridable via
-environment variables (defaults in the script):
+tree, the Sequentia node's `sequentia-cli`, and a `bitcoin-cli`. The script
+stages `sequentia-cli` under the name `elements-cli`, which is what SeqLN's
+`bcli` plugin invokes. Paths are overridable via environment variables
+(defaults in the script):
 
 ```
 SEQLN=$HOME/seqln \
-ELEMENTS_CLI=/path/to/elements-cli \
+ELEMENTS_CLI=/path/to/sequentia-cli \
 BITCOIN_CLI=/path/to/bitcoin-cli \
 npm run bundle:seqln
 ```
