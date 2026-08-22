@@ -14,7 +14,7 @@ const nodeMgr = new NodeManager();
 // is the optional Bitcoin-side node (SeqLN runs on Bitcoin networks too, and
 // the dual-chain pair is what pure-LN asset<->BTC swaps run on).
 const NETWORKS = {
-  'sequentia-testnet': { label: 'Sequentia testnet', backendName: 'Sequentia node (elementsd)', defaultPort: 18332, clnrestPort: 9737 },
+  'sequentia-testnet': { label: 'Sequentia testnet', backendName: 'Sequentia node (sequentiad)', defaultPort: 18332, clnrestPort: 9737 },
   'testnet4':          { label: 'Bitcoin testnet4',  backendName: 'Bitcoin node (bitcoind)',    defaultPort: 48332, clnrestPort: 9738 },
 };
 
@@ -119,7 +119,7 @@ function nodeStartConfig(network) {
 }
 
 // --- backend (chain RPC) probing ----------------------------------------------
-// A plain JSON-RPC-over-HTTP call to elementsd/bitcoind. Used by onboarding's
+// A plain JSON-RPC-over-HTTP call to sequentiad/bitcoind. Used by onboarding's
 // "Test connection" and the sync-progress display; works identically on every
 // platform (no CLI, no WSL import needed yet). bcli itself still uses the
 // bundled CLI at runtime.
