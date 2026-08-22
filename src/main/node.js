@@ -12,9 +12,11 @@
 //     cross-boundary unix socket is unreliable.
 //
 // SeqLN needs a chain backend. Its bcli plugin does not speak HTTP itself: it
-// shells out to elements-cli (Sequentia networks) or bitcoin-cli (Bitcoin
-// networks), which do the RPC. Both CLIs ship in the bundle; the actual
-// elementsd/bitcoind can be local or remote. Backend settings are written to
+// shells out to the node's CLI, which does the RPC. bcli invokes the Sequentia
+// CLI under the legacy name elements-cli, so the bundle stages sequentia-cli
+// under that name (see build/make-seqln-bundle.sh); bitcoin-cli serves the
+// Bitcoin networks. Both ship in the bundle; the actual sequentiad/bitcoind
+// can be local or remote. Backend settings are written to
 // <lightning-dir>/config (mode 0600 - the RPC password never touches argv).
 const { spawn, execFile } = require('child_process');
 const path = require('path');
